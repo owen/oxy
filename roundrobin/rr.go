@@ -72,23 +72,28 @@ func (r *RoundRobin) Next() http.Handler {
 
 func (r *RoundRobin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// make shallow copy of request before chaning anything to avoid side effects
+fmt.Println("firing serveHTTP")
 	newReq := *req
 	stuck := false
 	if r.ss != nil {
+fmt.Println("we are STUCK")
 		cookie_url, present, err := r.ss.GetBackend(&newReq, r.Servers())
 
+fmt.Println(cookie_url)
 		if err != nil {
 			r.errHandler.ServeHTTP(w, req, err)
 			return
 		}
 
 		if present {
+fmt.Println("present and set to url")
 			newReq.URL = cookie_url
 			stuck = true
 		}
 	}
 
 	if !stuck {
+fmt.Println("we are NOT STUCK")
 		url, err := r.NextServer()
 		if err != nil {
 			r.errHandler.ServeHTTP(w, req, err)
@@ -96,6 +101,7 @@ func (r *RoundRobin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if r.ss != nil {
+fmt.Println("STICKING a session NOW")
 			r.ss.StickBackend(url, &w)
 		}
 		newReq.URL = url
